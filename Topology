@@ -1,0 +1,31 @@
+import json
+#star-el número ingresado hace referencia a la cantidad de nodos alrededor del nodo central
+def create_star_topology(nodos):
+    i=0
+    array_nodos = []
+    for i in range(nodos+1):
+        i = i+1
+        nodo = "n" + str(i)
+        array_nodos.append(nodo)
+    print(array_nodos)
+    j=0
+    json_topology = []
+    for k in range(nodos+1):
+        if k == 1:
+            nodos_enlaces = []
+            for i in range(nodos):
+                nodos_enlaces.append(array_nodos[i+1])
+                i=i+1
+                nodo = {"enlaces": nodos_enlaces}
+                json_nodo = {array_nodos[k-1] : {"enlaces": nodos_enlaces}}
+            json_topology.append(json_nodo)
+        else:
+            nodos_enlaces = []
+            nodos_enlaces.append(array_nodos[0])
+            nodo = {"enlaces": nodos_enlaces}
+            json_nodo = {array_nodos[k - 1]: {"enlaces": nodos_enlaces}}
+            json_topology.append(json_nodo)
+        k=k+1
+    print(json_topology)
+
+create_star_topology(3)

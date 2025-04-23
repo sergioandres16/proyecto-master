@@ -1,0 +1,108 @@
+<html>
+<head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis.css" type="text/css" />
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.16.1/vis-network.min.js"> </script>
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+
+<style type="text/css">
+
+        #mynetwork {
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            border: 1px solid lightgray;
+            position: relative;
+            float: left;
+        }
+
+        
+
+        
+
+        
+</style>
+
+</head>
+
+<body>
+<div id = "mynetwork"></div>
+
+
+<script type="text/javascript">
+
+    // initialize global variables.
+    var edges;
+    var nodes;
+    var network; 
+    var container;
+    var options, data;
+
+    
+    // This method is responsible for drawing the graph, returns the drawn network
+    function drawGraph() {
+        var container = document.getElementById('mynetwork');
+        
+        
+
+        // parsing and collecting nodes and edges from the python
+        nodes = new vis.DataSet([{"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-b26c8d", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-b26c8d", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-24ff3a", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-24ff3a", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-8e9286", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-8e9286", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-26b84b", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-26b84b", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-061764", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-061764", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-723aa0", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-723aa0", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-07a4f6", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-07a4f6", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-3708f2", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-3708f2", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-e96696", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-e96696", "shape": "image"}, {"color": "#ffffff", "font": {"color": "#00ff00"}, "id": "vm-7c6fa2", "image": "https://www.nicepng.com/png/full/118-1187674_computer-pc-clipart-computer-application-computer-svg.png", "label": "vm-7c6fa2", "shape": "image"}]);
+        edges = new vis.DataSet([{"from": "vm-b26c8d", "to": "vm-24ff3a"}, {"from": "vm-b26c8d", "to": "vm-8e9286"}, {"from": "vm-b26c8d", "to": "vm-26b84b"}, {"from": "vm-061764", "to": "vm-723aa0"}, {"from": "vm-061764", "to": "vm-26b84b"}, {"from": "vm-723aa0", "to": "vm-07a4f6"}, {"from": "vm-723aa0", "to": "vm-3708f2"}, {"from": "vm-26b84b", "to": "vm-e96696"}, {"from": "vm-26b84b", "to": "vm-7c6fa2"}]);
+
+        // adding nodes and edges to the graph
+        data = {nodes: nodes, edges: edges};
+
+        var options = {
+    "configure": {
+        "enabled": false
+    },
+    "edges": {
+        "color": {
+            "inherit": true
+        },
+        "smooth": {
+            "enabled": false,
+            "type": "continuous"
+        }
+    },
+    "interaction": {
+        "dragNodes": true,
+        "hideEdgesOnDrag": false,
+        "hideNodesOnDrag": false
+    },
+    "physics": {
+        "enabled": true,
+        "stabilization": {
+            "enabled": true,
+            "fit": true,
+            "iterations": 1000,
+            "onlyDynamicEdges": false,
+            "updateInterval": 50
+        }
+    }
+};
+        
+        
+
+        
+
+        network = new vis.Network(container, data, options);
+	 
+        
+
+
+        
+
+        return network;
+
+    }
+
+    drawGraph();
+
+</script>
+</body>
+</html>
