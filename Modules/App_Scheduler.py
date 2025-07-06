@@ -1,58 +1,120 @@
-import pymysql
+"""
+===================================================================
+PLANIFICADOR DE RECURSOS - App_Scheduler
+===================================================================
+
+Este módulo implementa algoritmos de scheduling y placement para 
+asignar VMs a servidores físicos de manera óptima.
+
+Migrado a SQLite3 y configuración externalizada.
+Autor: Generado por Claude Code
+Versión: 2.0 - Migración a SQLite3
+===================================================================
+"""
+
 import requests
-from conf.Conexion import *
+from database.SliceManagerDB import SliceManagerDB
+from conf.ConfigManager import config
 lista_worker_general_filtrada=[]
 
 class Worker:
-    def __init__ (self, id_servidor,ram_disponible, disco_disponible, vcpu_disponible, ram, disco, vcpu):
-        self.id_servidor=id_servidor
-        self.ram_disponible=ram_disponible
-        self.disco_disponible=disco_disponible
-        self.vcpu_disponible=vcpu_disponible
-        self.ram=ram
-        self.disco=disco
-        self.vcpu=vcpu
+    """
+    Representa un servidor físico (worker) con sus recursos disponibles.
+    
+    Atributos:
+        id_servidor: ID único del servidor
+        ram_disponible: RAM disponible en MB
+        disco_disponible: Disco disponible en GB
+        vcpu_disponible: vCPUs disponibles
+        ram: RAM total en MB
+        disco: Disco total en GB
+        vcpu: vCPUs totales
+    """
+    def __init__ (self, id_servidor, ram_disponible, disco_disponible, vcpu_disponible, ram, disco, vcpu):
+        self.id_servidor = id_servidor
+        self.ram_disponible = ram_disponible
+        self.disco_disponible = disco_disponible
+        self.vcpu_disponible = vcpu_disponible
+        self.ram = ram
+        self.disco = disco
+        self.vcpu = vcpu
 
 class Vm:
-    def __init__ (self,nodo_nombre , ram_requerida, disco_requerido, vcpu_requeridas):
+    """
+    Representa una máquina virtual con sus recursos requeridos.
+    
+    Atributos:
+        nodo_nombre: Nombre del nodo/VM
+        ram_requerida: RAM requerida en MB
+        disco_requerido: Disco requerido en GB
+        vcpu_requeridas: vCPUs requeridas
+    """
+    def __init__ (self, nodo_nombre, ram_requerida, disco_requerido, vcpu_requeridas):
         self.nodo_nombre = nodo_nombre
-        self.ram_requerida=ram_requerida
-        self.disco_requerido=disco_requerido
-        self.vcpu_requeridas=vcpu_requeridas
+        self.ram_requerida = ram_requerida
+        self.disco_requerido = disco_requerido
+        self.vcpu_requeridas = vcpu_requeridas
 
 
 
 def filtrado(zona_disponibilidad, FACTOR):
-    #Hacer select de todos los workers y filtrarlos (query con un where zona_disponibilidad =)#
-    query="select s.id_servidor, r.ram_available, r.storage_available, r.vcpu_available, r.ram, r.storage, r.vcpu from recursos as r inner join servidor as s on s.id_recurso=r.id_recursos inner join zona_disponibilidad as zd on zd.idzona_disponibilidad=s.id_zona where zd.nombre= %s"
+    """
+    Filtra workers por zona de disponibilidad y aplica factor de recursos.
+    
+    Args:
+        zona_disponibilidad (str): Nombre de la zona de disponibilidad
+        FACTOR (float): Factor de multiplicación para recursos disponibles
+        
+    Returns:
+        List[Worker]: Lista de workers filtrados y configurados
+    """
+    # Query adaptada a SQLite3
+    query = """
+    SELECT s.id_servidor, r.ram_available, r.storage_available, r.vcpu_available, 
+           r.ram, r.storage, r.vcpu 
+    FROM recursos r 
+    INNER JOIN servidor s ON s.id_recurso = r.id_recursos 
+    INNER JOIN zona_disponibilidad zd ON zd.idzona_disponibilidad = s.id_zona 
+    WHERE zd.nombre = ?
+    """
 
-    ip="10.20.12.35"
-    username="grupo1_final"
-    paswd="grupo1_final"
-    database="bd_general"
-    con = pymysql.connect(host=ip,user= username,password=paswd, db=database)
-    resultado=[]
+    db = SliceManagerDB()
+    resultado = []
+    
     try:
-        with con.cursor() as cur1:
-            cur1.execute(query, (zona_disponibilidad,))
-        resultado1 = cur1.fetchall()
-
-        for f in resultado1:
-            worker=Worker(f[0],float(f[1])*FACTOR,float(f[2])*FACTOR,float(f[3])*FACTOR,float(f[4])*FACTOR,float(f[5])*FACTOR,float(f[6])*FACTOR)
+        # Ejecutar consulta con parámetro SQLite3
+        results = db.execute_query(query, (zona_disponibilidad,))
+        
+        for row in results:
+            worker = Worker(
+                row[0],                    # id_servidor
+                float(row[1]) * FACTOR,    # ram_disponible
+                float(row[2]) * FACTOR,    # storage_disponible  
+                float(row[3]) * FACTOR,    # vcpu_disponible
+                float(row[4]) * FACTOR,    # ram_total
+                float(row[5]) * FACTOR,    # storage_total
+                float(row[6]) * FACTOR     # vcpu_total
+            )
             lista_worker_general_filtrada.append(worker)
-    finally:
-        con.close()
+            
         return lista_worker_general_filtrada
+        
+    except Exception as e:
+        print(f"Error en filtrado de workers: {e}")
+        return []
 
 def takeSecond(elem):
     return elem[0]
 
 
 def calculo_coeficiente(ram_disponible, disco_disponible, vcpu_requeridas, vcpu_disponible,ram,disco):
+    scheduler_config = config.get_scheduler_config()
     if (ram==0 or disco==0 or vcpu_disponible==0):
         coeficiente = 0
     else:
-        coeficiente = 0.5*(ram_disponible/ram)+0.25*(disco_disponible/disco) + 0.25*(vcpu_requeridas/vcpu_disponible)
+        coeficiente = (scheduler_config['ram_weight']*(ram_disponible/ram) + 
+                      scheduler_config['disk_weight']*(disco_disponible/disco) + 
+                      scheduler_config['vcpu_weight']*(vcpu_requeridas/vcpu_disponible))
     return coeficiente
 
 def ordenamiento_coeficiente(lista_worker_general_filtrada,vm):
@@ -87,8 +149,10 @@ def ordenamiento_coeficiente(lista_worker_general_filtrada,vm):
         if (worker.ram_disponible >= vm.ram_requerida and worker.disco_disponible >= vm.disco_requerido and worker.vcpu_disponible >= vm.vcpu_requeridas):
             worker_elegido = worker
             worker_nuevo = worker_elegido
-            ram_disponible_new= worker.ram_disponible - (vm.ram_requerida*1048576)
-            disco_disponible_new = worker.disco_disponible - (vm.disco_requerido*1073741824)
+            bytes_to_mb = config.get('BYTES_TO_MB')
+            bytes_to_gb = config.get('BYTES_TO_GB')
+            ram_disponible_new= worker.ram_disponible - (vm.ram_requerida*bytes_to_mb)
+            disco_disponible_new = worker.disco_disponible - (vm.disco_requerido*bytes_to_gb)
             vcpu_total_new= worker.vcpu_disponible - vm.vcpu_requeridas
             worker_nuevo.ram_disponible=ram_disponible_new
             worker_nuevo.disco_disponible=disco_disponible_new

@@ -3,6 +3,7 @@ from Modules.App_Scheduler import *
 from Modules.LinuxClusterDriver import *
 from Modules.OpenStackDriver import *
 from conf.Conexion import *
+from conf.ConfigManager import config
 from Modules.Validador import  *
 import json
 import os
@@ -12,8 +13,8 @@ class SliceAdministrator:
         pass
 
     def create_topology(self, grafo,tipo):
-        FACTOR = 2
-        slice, result = scheduler_main(grafo, FACTOR)
+        resource_factor = config.get('RESOURCE_FACTOR')
+        slice, result = scheduler_main(grafo, resource_factor)
         if result:
             print("-----------------")
             print(slice)
@@ -62,7 +63,9 @@ class SliceAdministrator:
 
     def save_slice(self, slice):
         #llamar a driver para actualizar
-        f = open(f"./Modules/Slices/{slice['nombre']}.json", "w")
+        paths_config = config.get_paths_config()
+        slice_path = f"{paths_config['slices_config_path']}{slice['nombre']}{paths_config['slice_file_extension']}"
+        f = open(slice_path, "w")
         f.write(json.dumps(slice))
         f.close()
         print(f"* Slice {slice['nombre']} guardado.")

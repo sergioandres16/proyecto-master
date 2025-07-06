@@ -3,6 +3,7 @@ import random
 import secrets as s
 import requests
 from conf.Conexion import *
+from conf.ConfigManager import config
 from Modules.SliceAdministrator import *
 from datetime import datetime
 import json
@@ -86,7 +87,9 @@ def linux_driver_main(slice):
                     "vlan_id": vlan,
                     "vnc_port": vnc_port,
                     "vm_worker_id" : vm_worker_id}
-            result = requests.post("http://10.20.12.58:8081/vm/crear", json= data)
+            cluster_config = config.get_cluster_config()
+            vm_create_url = f"{cluster_config['api_url']}{cluster_config['vm_create_endpoint']}"
+            result = requests.post(vm_create_url, json= data)
             print(result.json())
             if (result):
                 nodo["instanciado"]="true"
@@ -118,11 +121,14 @@ def linux_driver_main(slice):
     slice["estado"]="ejecutado"
     worker_list = ",".join(worker_list)
     flow_data={"vlan_id": vlan, "workers_id": worker_list}
-    result = requests.post("http://10.20.12.58:8081/OFS/flows", json= flow_data)
+    flows_url = f"{cluster_config['api_url']}{cluster_config['flows_endpoint']}"
+    result = requests.post(flows_url, json= flow_data)
     slice["mapeo_nombres"] = vm_nombres
     #sliceobj=SliceAdministrator()
     #sliceobj.save_slice(slice)
-    f = open(f"./Modules/Slices/{slice['nombre']}.json", "w")
+    paths_config = config.get_paths_config()
+    slice_path = f"{paths_config['slices_config_path']}{slice['nombre']}{paths_config['slice_file_extension']}"
+    f = open(slice_path, "w")
     f.write(json.dumps(slice))
     f.close()
     #print(f"* Slice {slice['nombre']} guardado.")
@@ -153,7 +159,9 @@ def borrar_slice(slice):
         for enlace_nombre in enlaces_list:
             tap = f"{nombre_vm[3:]}-{enlace_nombre}"
             taps_list.append(tap)
-        result = requests.get("http://10.20.12.58:8081/vm/borrar?worker_id="+str(vm_worker_id)+"&vm_name="+nombre_vm+"&taps="+str(",".join(taps_list)))
+        cluster_config = config.get_cluster_config()
+        vm_delete_url = f"{cluster_config['api_url']}{cluster_config['vm_delete_endpoint']}?worker_id={vm_worker_id}&vm_name={nombre_vm}&taps={','.join(taps_list)}"
+        result = requests.get(vm_delete_url)
         if (result):
             
             id_nodo_general= conn.Select("id_vm","vm","nombre= "+"'"+nombre_vm+"'")

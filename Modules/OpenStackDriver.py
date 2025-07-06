@@ -1,6 +1,7 @@
 import secrets as s
 import requests
 from conf.Conexion import *
+from conf.ConfigManager import config
 from datetime import datetime
 import json
 import random
@@ -10,6 +11,7 @@ id_flavor_list = []
 
 
 def get_token():
+    openstack_config = config.get_openstack_config()
     d = {
         "auth": {
             "identity": {
@@ -19,25 +21,25 @@ def get_token():
                 "password": {
                     "user": {
                         "domain": {
-                            "id": "default",
-                            "name": "Default"
+                            "id": openstack_config['domain_id'],
+                            "name": openstack_config['domain_name']
                         },
-                        "name": "admin",
-                        "password": "grupo_1"
+                        "name": openstack_config['admin_user'],
+                        "password": openstack_config['admin_password']
                     }
                 }
             },
             "scope": {
                 "project": {
                     "domain": {
-                        "id": "default"
+                        "id": openstack_config['domain_id']
                     },
-                    "name": "admin"
+                    "name": openstack_config['project_name']
                 }
             }
         }
     }
-    response = requests.post(f'http://10.20.12.54:5000/v3/auth/tokens', json=d)
+    response = requests.post(openstack_config['keystone_url'], json=d)
     return response
 
 
@@ -49,16 +51,18 @@ def create_flavor(token, nombre, ram, vcpu, disk):
             "ram": ram,
             "vcpus": vcpu,
             "disk": disk,
-            "rxtx_factor": 1.0
+            "rxtx_factor": config.get('RXTX_FACTOR')
         }
     }
-    response = requests.post(f'http://10.20.12.54:8774/v2.1/flavors', headers=h, json=d)
+    openstack_config = config.get_openstack_config()
+    response = requests.post(f"{openstack_config['nova_url']}/flavors", headers=h, json=d)
     return response.json()["flavor"]["id"]
 
 
 def get_flavors_id(token, nombre):
     h = {"X-Auth-Token": token}
-    response = requests.get(f'http://10.20.12.54:8774/v2.1/flavors/detail', headers=h)
+    openstack_config = config.get_openstack_config()
+    response = requests.get(f"{openstack_config['nova_url']}/flavors/detail", headers=h)
     id_flavor = ""
     for fl in response.json()["flavors"]:
         if (fl["name"] == nombre):

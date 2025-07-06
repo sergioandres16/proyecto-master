@@ -6,6 +6,7 @@ import datetime
 import schedule
 
 from conf.Conexion import *
+from conf.ConfigManager import config
 
 
 class Validador:
@@ -35,8 +36,7 @@ class Validador:
     def registrarDataCadaMinuto(self):
         conn = Conexion()
         con = conn.conectar()
-        server_names = ["Worker1","Worker2","Worker3","Worker4","Worker5","Worker6",
-                        "Compute1","Compute2","Compute3","Compute4","Compute5","Compute6"]
+        server_names = config.get_worker_names()
         ts = time.time()
         timestamp = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
         try:
@@ -50,7 +50,8 @@ class Validador:
             con.close()
 
     def obtenerDataActual(self):
-        url = 'http://10.20.12.58:8081/cpu-metrics'
+        cluster_config = config.get_cluster_config()
+        url = f"{cluster_config['api_url']}{cluster_config['metrics_endpoint']}"
         data_actual = requests.get(url)
         #datos = [ram]
         #header = {'accept': 'application/json'}

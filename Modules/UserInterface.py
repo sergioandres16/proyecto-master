@@ -5,6 +5,7 @@ from Modules.OpenStackDriver import *
 import json
 import os
 from conf.Conexion import *
+from conf.ConfigManager import config
 import logging
 import math
 import schedule
@@ -145,7 +146,8 @@ class UserInterface:
             ip=ip[0]
             ram = int(recursos[0][0]) #/ 1000000
             disco = int(recursos[0][2]) #/ 1000000
-            vnc_port=5900+vm[2]
+            vnc_base_port = config.get('VNC_BASE_PORT')
+            vnc_port = vnc_base_port + vm[2]
             print(f"VM: {vm[0]} - Capacidad: RAM:{str(ram)} MB CPU:{recursos[0][1]} DISCO:{str(disco)} GB - ACCESO_VNC: {ip[0]}:{vnc_port}")
 
     @staticmethod
@@ -319,7 +321,9 @@ class UserInterface:
             opt = input("Opcion: ")
             if opt == "1" or opt == "2":
                 if opt == "1":
-                    f = open(f"./Modules/Slices/{slice['nombre']}.json", "w")
+                    paths_config = config.get_paths_config()
+                    slice_path = f"{paths_config['slices_config_path']}{slice['nombre']}{paths_config['slice_file_extension']}"
+                    f = open(slice_path, "w")
                     f.write(json.dumps(slice))
                     f.close()
                     print(f"* Slice {slice['nombre']} guardado.")
@@ -337,7 +341,9 @@ class UserInterface:
                     print("**************************************")
                     result = UserInterface.create_topology(slice)
         else:
-            f = open(f"./Modules/Slices/{slice['nombre']}.json", "w")
+            paths_config = config.get_paths_config()
+            slice_path = f"{paths_config['slices_config_path']}{slice['nombre']}{paths_config['slice_file_extension']}"
+            f = open(slice_path, "w")
             f.write(json.dumps(slice))
             f.close()
             print("* Cambios guardados e implementando slice ...")
@@ -421,14 +427,16 @@ class UserInterface:
                                 #lista1 = o.listar_slices("linux_cluster")
                                 #lista2 = o.listar_slices("openstack")
                                 print("*********************************")
-                                files = os.listdir('./Modules/Slices')
+                                paths_config = config.get_paths_config()
+                                files = os.listdir(paths_config['slices_config_path'])
                                 i = 0
                                 for file_name in files:
                                     print(f"{i+1}. {file_name[:-5]}")
                                     i += 1
                                 slice_opt = input("Seleccionar slice: ")
                                 file_name = files[int(slice_opt)-1]
-                                f = open(f"./Modules/Slices/{file_name}", "r")
+                                slice_path = f"{paths_config['slices_config_path']}{file_name}"
+                                f = open(slice_path, "r")
                                 slice = json.loads(f.read())
                                 prox_node = slice["ultimo_nodo"]+1
                                 f.close()
@@ -832,7 +840,9 @@ class UserInterface:
                                 elif int(confirma_borrado) == 1:
                                     #o.def_borrar_menu2(slice)
                                     print("***********************************")
-                                    f = open(f"./Modules/Slices/{nombre_slice}.json")
+                                    paths_config = config.get_paths_config()
+                                    slice_path = f"{paths_config['slices_config_path']}{nombre_slice}{paths_config['slice_file_extension']}"
+                                    f = open(slice_path)
                                     data=f.readlines()
                                     data=data[0]
                                     json_slice = json.loads(data)
