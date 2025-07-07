@@ -1,0 +1,29 @@
+# ===================================================================
+# DEPENDENCIAS PARA API REST - SISTEMA DE SLICES
+# ===================================================================
+
+# === CORE API DEPENDENCIES ===
+fastapi==0.111.1
+uvicorn[standard]==0.24.0
+pydantic==2.8.2
+pydantic-settings==2.1.0
+
+# === HTTP CLIENTS ===
+requests==2.31.0
+httpx==0.25.2
+
+# === EXISTING DEPENDENCIES ===
+networkx==2.8.3
+schedule==1.1.0
+
+# === VISUALIZATION (OPTIONAL) ===
+plotly==5.17.0
+
+# === UTILITIES ===
+python-multipart==0.0.9
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# === DEVELOPMENT ===
+pytest==7.4.3
+pytest-asyncio==0.21.1
